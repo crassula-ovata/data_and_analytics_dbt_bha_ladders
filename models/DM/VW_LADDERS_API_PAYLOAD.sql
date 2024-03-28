@@ -197,6 +197,8 @@ with payloads as (
                                         then '"map_coordinates": ' || ifnull('"' || replace(replace(replace(map_coordinates, '"', '\\"'), '\n', '\\n'), '\r', '\\r') || '"','""') || ',' else '' end ||
                                     case when gender_action is not null or action = 'create' and gender is not null
                                         then '"gender": ' || ifnull('"' || replace(replace(replace(gender, '"', '\\"'), '\n', '\\n'), '\r', '\\r') || '"','""') || ',' else '' end ||
+                                    case when account_name_action is not null or action = 'create' and account_name is not null
+                                        then '"account_name": ' || ifnull('"' || replace(replace(replace(account_name, '"', '\\"'), '\n', '\\n'), '\r', '\\r') || '"','""') || ',' else '' end ||
                                     --12/1: SL added for tile_header
                                     --12/4: BR removed/commented out tile_header. Will be added to Unit cases instead. 
                                     -- '"tile_header": "' || replace(replace(replace(tile_header::string, '"', '\\"'), '\n', '\\n'), '\r', '\\r') || '"' || ',' ||

@@ -14,7 +14,7 @@ c_prod as (
     -- 5/31: KC ran this sub-select to find that the CommCare properties were not created, Anthony created this see ticket
     -- 6/1: KC checked sub-select to find that Commcare properties did not make it to Snowflake AWS, assigned to Shu to take a look
     select * from (
-        select case_id, external_id, case_name, display_name, county, address_city, address_full, 
+        select case_id, external_id, case_name, display_name, account_name, county, address_city, address_full, 
             address_state, address_street, phone_number, phone_details, phone_display as phone_display, address_zip, clinic_type, substance_use_services, opioid_treatment_provider,
             --5/28 sprint D: BR include new fields
             original_licensure_date, 
@@ -66,12 +66,16 @@ c_share as (
         dm.external_id_format(parent_account_id) || '#' || dm.external_id_format(account_id) as ladders_external_id,
         dm.external_id_format(parent_account_id) as provider_external_id,
         bha_general_acct as provider_name,
-        account_name as case_name, 
+        case when provider_directory_display_name <> '' then replace(replace(replace(provider_directory_display_name, '?', '-'), char(13)), char(10))
+             when program_name <>'' then replace(replace(replace(program_name, '?', '-'), char(13)), char(10))
+             else account_name 
+        end as case_name, 
         -- 6/14 removing "?"
         case when provider_directory_display_name <> '' then replace(replace(replace(provider_directory_display_name, '?', '-'), char(13)), char(10))
              when program_name <>'' then replace(replace(replace(program_name, '?', '-'), char(13)), char(10))
              else account_name 
         end as display_name,
+        account_name as account_name,
         -- 4/10: include county from BHA LADDERS
         initcap(county, ' ') as county,
         initcap(billing_city, ' ') as address_city,
@@ -370,69 +374,6 @@ dm.get_map_popup(c_share.display_name, c_share.phone_display, c_share.address_fu
  from  c_share join c_prod on c_share.ladders_external_id = c_prod.external_id
     order by ladders_external_id
 ),
--- ,
--- 12/1 for tile_header
--- tile_header as (
---     select ladders_external_id,
---         '**' as text_before_display_name,
---         c_share.display_name as display_name,
---         '** % * **Phone:** ' as text_before_phone_display, 
---         iff(c_share.phone_display = '', 'No information available', c_share.phone_display) as phone_display,
---         '% *  **Address:** ' as text_before_address_full, 
---         iff(c_share.address_full = '', 'No information available', c_share.address_full) as address_full,
---         '% *  **Facility Setting:** ' as text_before_mental_health_settings,
---         case when c_share.mental_health_settings <> '' then
---                 replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(c_share.mental_health_settings, 'hospital', 'Hospital, '),
---                 'emergency', 'Emergency, '), 
---                 'outpatient', 'Outpatient, '), 
---                 'intensive_outpatient', 'Intensive Outpatient, '), 
---                 '72_hour_treatment_and_evaluation', '72-Hour Treatment & Evaluation, '), 
---                 'residential_long_term_treatment', 'Residential Long Term Treatment, '), 
---                 'residential_short_term_treatment', 'Residential Short Term Treatment, '), 
---                 'day_treatment', 'Day Treatment, '), 
---                 'psychiatric_residential', 'Psychiatric Residential, '), 
---                 'community_mental_health_center', 'Community Mental Health Center, '), 
---                 'community_mental_health_clinic', 'Community Mental Health Clinic, '),
---                 'residential_child_care_facility', 'Residential Child Care Facility, '),
---                 'crisis_stabilization_unit', 'Crisis Stabilization Unit, '),
---                 'acute_treatment_unit', 'Acute Treatment Unit, ')
---             else 'No information available'
---         end as mental_health_settings,
---         '% * **Insurance Accepted:** ' as text_before_insurance,  
---         case when c_share.insurance <> '' then
---                 replace(replace(replace(replace(c_share.insurance, 'medicaid', 'Medicaid, '),
---                 'private_insurance', 'Private Insurance, '), 
---                 'self_pay', 'Self-Pay, '), 
---                 'sliding_fee_scale', 'Sliding Fee Scale, ')
---             else 'No information available'
---         end as insurance,  
---         '%; * **Referral Requirements:** ' as text_before_referral_type,
---         case when c_prod.referral_type <> '' then
---                 replace(replace(replace(replace(replace(c_prod.referral_type, 'referral_packet', 'Referral Packet, '),
---                 'walk_in', 'Walk_In, '), 
---                 'assessment_needed', 'Assessment Needed, '), 
---                 'insurance_authorization', 'Insurance Authorization, '),
---                 'labs', 'Labs, ')
---             else 'No information available'
---         end as referral_type,
---         '% * **Client Exclusions:** ' as text_before_exclusions,
---         case when c_prod.exclusions <> '' then
---                 replace(replace(replace(replace(c_prod.exclusions, 'dementia', 'Dementia, '),
---                 'teens_in_active_detox', 'Teens in Active Detox, '), 
---                 'traumatic_brain_injury', 'Traumatic Brain Injury, '), 
---                 'violent', 'Violent, ')
---             else 'No information available'
---         end as exclusions,
---         '% [View More Information](https://www.commcarehq.org/a/' as text_view_more_info_link1, 
---         case split_part(current_database(),'_',-1)
---             when 'DEV'  then  'co-carecoordination-dev'        
---             when 'QA'   then  'co-carecoordination-uat'
---             when 'PROD' then  'co-carecoordination'
---         end as project_space,
---         '/app/v1/1e8de29bae5745e99ed2fb1d1a55adac/view_facility/?case_id=' as text_view_more_info_link2
---     from c_share left join c_prod on c_share.ladders_external_id = c_prod.external_id
---         order by ladders_external_id
--- )
 final as (
 select
         c_prod.external_id as prod_external_id,   -- from prod
@@ -469,6 +410,7 @@ select
         c_share.provider_external_id,
         iff(c_share.case_name = '', null,c_share.case_name) as case_name, 
         iff(c_share.display_name ='', null, c_share.display_name) as display_name,
+        iff(c_share.account_name ='', null, c_share.account_name) as account_name,
         -- 4/10: Include county check
         iff(c_share.county = '', null, c_share.county) as county,
         iff(c_share.address_city = '', null, c_share.address_city) as address_city,
@@ -600,6 +542,9 @@ select
         case
             when c_prod.external_id is not null and nvl(c_prod.display_name, '') <> nvl(c_share.display_name, '') then 'update_display_name' else null
         end as display_name_action,
+        case
+            when c_prod.external_id is not null and nvl(c_prod.account_name, '') <> nvl(c_share.account_name, '') then 'update_account_name' else null
+        end as account_name_action,
         -- 4/10: Added county check
         case
             when c_prod.external_id is not null and nvl(c_prod.county, '') <> nvl(c_share.county, '') then 'update_county' else null
@@ -805,7 +750,10 @@ select
         end as map_popup_action,
         case 
         when c_prod.external_id is not null and (
-                 case_name_action is not null or display_name_action is not null or address_city_action is not null 
+                 case_name_action is not null 
+                  or display_name_action is not null
+                  or account_name_action is not null 
+                  or address_city_action is not null 
                   or address_full_action is not null or address_state_action is not null 
                   or address_street_action is not null
                   or address_zip_action is not null or clinic_type_action is not null 
@@ -814,8 +762,7 @@ select
                   or phone_display_action is not null
                   or opioid_treatment_provider_action is not null 
                   -- or substance_use_services_action is not null
-                  or 
-                  county_action is not null
+                  or county_action is not null
                   -- BR build work 
                   or original_licensure_date_action is not null
                   or sud_license_number_action  is not null
@@ -904,6 +851,7 @@ order by action,ladders_external_id, c_prod.date_opened, c_share.case_name
 	PROVIDER_EXTERNAL_ID,
 	CASE_NAME,
 	DISPLAY_NAME,
+    ACCOUNT_NAME,
 	COUNTY,
 	ADDRESS_CITY,
 	ADDRESS_FULL,
@@ -981,6 +929,7 @@ order by action,ladders_external_id, c_prod.date_opened, c_share.case_name
 	MED_MONITORED_INPATIENT_DETOX,
 	CASE_NAME_ACTION,
 	DISPLAY_NAME_ACTION,
+    ACCOUNT_NAME_ACTION,
 	COUNTY_ACTION,
 	ADDRESS_CITY_ACTION,
 	ADDRESS_FULL_ACTION,
