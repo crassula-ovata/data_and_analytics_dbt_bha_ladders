@@ -57,7 +57,7 @@ sources:
       - name: VWS_LADDERS_BHE_ONLY_ACTIVE_LICENSES
       - name: VW_BHA_LADDERS_RAW       
 
-  - name: ladders_views
+  - name: ladders_views_data
       database: |
         {%- if target.name=="dev" -%} DM_LADDERS_DEV
         {%- elif target.name=="qa" -%} DM_LADDERS_QA

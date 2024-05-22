@@ -1,6 +1,6 @@
 with 
 dm_view_clinic_create_update as (
-      select * from  {{ source('ladders_views', 'VW_CLINICS_CREATE_UPDATE') }}
+      select * from  {{ source('ladders_views_data', 'VW_CLINICS_CREATE_UPDATE') }}
 ), 
 dm_table_data_unit as (
       select * from  {{ source('dm_table_data', 'CASE_UNIT') }}

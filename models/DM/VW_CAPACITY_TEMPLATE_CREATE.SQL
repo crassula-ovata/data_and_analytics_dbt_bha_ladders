@@ -1,5 +1,5 @@
 with 
-dm_table_data_clinic as (
+dm_table_data_clinic (
     select * from  {{ source('dm_table_data', 'CASE_CLINIC') }}
 ), 
 dm_table_data_unit (
