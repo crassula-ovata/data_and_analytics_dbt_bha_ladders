@@ -55,4 +55,21 @@ sources:
       - name: VWS_LADDERS_ACTIVE_LICENSES
       - name: VWS_LADDERS_BHE_ACTIVE_LICENSES
       - name: VWS_LADDERS_BHE_ONLY_ACTIVE_LICENSES
-      - name: VW_BHA_LADDERS_RAW               
+      - name: VW_BHA_LADDERS_RAW       
+
+  - name: ladders_views
+      database: |
+        {%- if target.name=="dev" -%} DM_LADDERS_DEV
+        {%- elif target.name=="qa" -%} DM_LADDERS_QA
+        {%- elif target.name=="prod" -%} DM_LADDERS_PROD
+        {%- elif target.name=="test-location" -%} DM_LADDERS_BHA_LOCATION_REDESIGN_1
+        {%- elif target.name=="test-perf" -%} DM_LADDERS_PERF
+        {%- elif target.name=="test" -%} DM_LADDERS_TEST
+        {%- else -%} invalid_database
+        {%- endif -%}    
+      schema: 
+        DM
+      tables:
+        - name: VW_CLINICS_CREATE_UPDATE
+        - name: VW_UNIT_UPDATE
+        - name: VW_CAPACITY_UPDATE        
