@@ -1,13 +1,10 @@
 with 
 dm_table_data_clinic as (
-      select * from  {{ source('dm_table_data', 'CASE_CLINIC') }}
+    select * from  {{ source('dm_table_data', 'CASE_CLINIC') }}
 ), 
 dm_table_data_unit (
-      select * from  {{ source('dm_table_data', 'CASE_UNIT') }}
+    select * from  {{ source('dm_table_data', 'CASE_UNIT') }}
 ), 
-dm_table_data_capacity as (
-      select * from  {{ source('dm_table_data', 'CASE_CAPACITY') }}
-),
 -- domain ?
 final as 
 (
@@ -67,7 +64,6 @@ final as
         and
         unit.case_id not in 
             (select unit_case_ids from dm_table_data_capacity)
-        -- last_updated_date_time_raw = -1
         and unit.closed = false
 ) 
 select
