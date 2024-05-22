@@ -60,14 +60,13 @@ final as
         unit.gender as unit_gender,
         unit.population_served as unit_population_served,
         unit.id as unit_case_ids
-        
     from 
-        DM_CO_CARE_COORD_test.DM.CASE_UNIT unit
-        inner join DM_CO_CARE_COORD_test.DM.CASE_CLINIC clinic
+        dm_table_data_unit unit
+        inner join dm_table_data_clinic clinic
         on unit.parent_case_id = clinic.case_id 
         and
         unit.case_id not in 
-            (select unit_case_ids from DM_CO_CARE_COORD_test.DM.case_capacity)
+            (select unit_case_ids from dm_table_data_capacity)
         -- last_updated_date_time_raw = -1
         and unit.closed = false
 ) 
