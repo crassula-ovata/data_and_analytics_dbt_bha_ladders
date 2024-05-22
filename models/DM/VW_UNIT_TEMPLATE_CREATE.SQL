@@ -1,14 +1,10 @@
 with 
-dm_view_clinic_create_update as (
-      select * from  {{ source('ladders_views_data', 'VW_CLINICS_CREATE_UPDATE') }}
-), 
 dm_table_data_unit as (
       select * from  {{ source('dm_table_data', 'CASE_UNIT') }}
 ),
 dm_table_data_location as (
       select * from  {{ source('dm_table_data', 'LOCATION') }}
 ),
-
 
 final as
 (
@@ -36,7 +32,8 @@ final as
         'yes' as clinic_accepts_commcare_referrals,
         '-1' as last_updated_date_time_raw, 
         '0' as open_beds_count
-    from dm_view_clinic_create_update clinic 
+    from 
+        dm.VW_CLINICS_CREATE_UPDATE clinic 
         inner join 
         dm_table_data_location loc 
         on (clinic.ladders_external_id || 'facility_data') = loc.site_code
@@ -65,6 +62,7 @@ select
     CLINIC_DISPLAY_NAME,
     GENDER,
     CURRENT_STATUS,
-    CLINICS_ACCEPTS_COMMCARE_REFERRALS,
-    LAST_UPDATED_DATE_TIME_RAW
-from final;
+    CLINIC_ACCEPTS_COMMCARE_REFERRALS,
+    LAST_UPDATED_DATE_TIME_RAW,
+    OPEN_BEDS_COUNT
+from final
