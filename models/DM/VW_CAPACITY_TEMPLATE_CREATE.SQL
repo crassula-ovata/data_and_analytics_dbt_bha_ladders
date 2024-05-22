@@ -1,25 +1,24 @@
-with 
-dm_table_data_clinic (
+with dm_table_data_clinic as (
     select * from  {{ source('dm_table_data', 'CASE_CLINIC') }}
 ), 
-dm_table_data_unit (
+dm_table_data_unit as (
     select * from  {{ source('dm_table_data', 'CASE_UNIT') }}
 ), 
--- domain ?
+dm_table_data_capacity as (
+    select * from  {{ source('dm_table_data', 'CASE_CAPACITY') }}
+), 
 final as 
 (
     select
-        -- parent/index properties
         unit.parent_case_id as parent_case_id,
         'clinic' as parent_case_type,
         'extension' as parent_relationship,
         'parent' as parent_identifier,
-        ----- Capacity properties
         'capacity' as case_type,
-        null as external_id,
-        null as case_id,
-        'Template Bed Group 1'as CASE_NAME,
-        unit.owner_id as owner_id, -- owner_id
+        '' as external_id,
+        '' as case_id,
+        'Template Bed Group 1' as CASE_NAME,
+        unit.owner_id as owner_id,
         clinic.display_name as clinic_case_name_display,
         'yes' as accepts_commcare_referrals,
         case
@@ -50,8 +49,32 @@ final as
         unit.last_updated_date_time_raw::string as clinic_availability_last_updated_date_time_raw,
         clinic.map_coordinates as clinic_map_coordinates,
         clinic.map_popup as clinic_map_popup,
-        'https://www.commcarehq.org/a/co-carecoordination-' || '$domain' || '/app/v1/a1a67a223416440199f060b6a94d15a6/view_facility/?case_id=' as view_more_info_smartlink_referrals,
-        'https://www.commcarehq.org/a/co-carecoordination-' || '$domain' || '/app/v1/1e8de29bae5745e99ed2fb1d1a55adac/view_facility/?case_id=' as view_more_info_smartlink_bed_tracker,
+        'https://www.commcarehq.org/a/co-carecoordination-' || 
+        {% if target.name=='dev' %}
+            'co-carecoordination-dev'
+            {% elif target.name=='qa' %}
+            'co-carecoordination-uat'
+            {% elif target.name=='prod' %}
+            'co-carecoordination-prod'
+            {% elif target.name=='test' %}
+            'co-carecoordination-test'
+            {% else %}
+            invalid
+        {% endif %}
+        || '/app/v1/a1a67a223416440199f060b6a94d15a6/view_facility/?case_id=' as view_more_info_smartlink_referrals,
+        'https://www.commcarehq.org/a/co-carecoordination-' || 
+        {% if target.name=='dev' %}
+            'co-carecoordination-dev'
+            {% elif target.name=='qa' %}
+            'co-carecoordination-uat'
+            {% elif target.name=='prod' %}
+            'co-carecoordination-prod'
+            {% elif target.name=='test' %}
+            'co-carecoordination-test'
+            {% else %}
+            invalid
+        {% endif %}
+        || '/app/v1/1e8de29bae5745e99ed2fb1d1a55adac/view_facility/?case_id=' as view_more_info_smartlink_bed_tracker,
         '0' as open_beds,
         'open' as current_status,
         unit.gender as unit_gender,
@@ -74,7 +97,7 @@ select
     case_type,
     external_id,
     case_id,
-    CASE_NAME,
+    case_name,
     owner_id,
     clinic_case_name_display,
     accepts_commcare_referrals,
@@ -95,4 +118,4 @@ select
     unit_gender,
     unit_population_served,
     unit_case_ids 
-from final;
+from final
