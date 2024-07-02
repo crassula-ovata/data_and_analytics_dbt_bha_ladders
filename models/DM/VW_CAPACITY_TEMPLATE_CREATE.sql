@@ -21,7 +21,7 @@ final as
         unit.owner_id as owner_id,
         clinic.display_name as clinic_case_name_display,
         unit.case_name as unit_case_name_display,
-        'yes' as clinic_accepts_commcare_referrals,
+        'no' as clinic_accepts_commcare_referrals,
         case
             when clinic.phone_referrals is null
                 then 'No information available'

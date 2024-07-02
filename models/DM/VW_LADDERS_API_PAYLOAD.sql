@@ -26,7 +26,6 @@ with payloads as (
                     then '"gender": ' || '"'   || gender ||  '"'  || ',' else '' end || 
             case when nullif(current_status,'') is not null 
                     then '"current_status": ' || '"' || current_status ||  '"'   || ',' else '' end ||
-            '"clinic_accepts_commcare_referrals": ' || '"' || clinic_accepts_commcare_referrals ||  '",'  ||
             '"last_updated_date_time_raw": ' || '"' || last_updated_date_time_raw ||  '",'  ||
 
             '"open_beds_count": ' || '"' || open_beds_count ||  '"'  || -- rtrim trailing comma from the key properties' values
@@ -318,7 +317,7 @@ with payloads as (
                                     case when account_name_action is not null or action = 'create' and account_name is not null
                                         then '"account_name": ' || ifnull('"' || replace(replace(replace(account_name, '"', '\\"'), '\n', '\\n'), '\r', '\\r') || '"','""') || ',' else '' end ||
                                     case when action = 'create'
-                                        then '"accepts_commcare_referrals": "yes",' else '' end  ||
+                                        then '"accepts_commcare_referrals": "no",' else '' end  ||
                                     --12/1: SL added for tile_header
                                     --12/4: BR removed/commented out tile_header. Will be added to Unit cases instead. 
                                     -- '"tile_header": "' || replace(replace(replace(tile_header::string, '"', '\\"'), '\n', '\\n'), '\r', '\\r') || '"' || ',' ||

@@ -33,7 +33,6 @@ final as
         clinic.case_name as clinic_display_name,
         clinic.gender as gender,
         'open' as current_status,
-        'yes' as clinic_accepts_commcare_referrals,
         '-1' as last_updated_date_time_raw, 
         '0' as open_beds_count
     from 
@@ -64,7 +63,6 @@ select
     CLINIC_DISPLAY_NAME,
     GENDER,
     CURRENT_STATUS,
-    CLINIC_ACCEPTS_COMMCARE_REFERRALS,
     LAST_UPDATED_DATE_TIME_RAW,
     OPEN_BEDS_COUNT
 from final
